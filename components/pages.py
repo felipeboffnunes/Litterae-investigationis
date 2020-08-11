@@ -53,7 +53,7 @@ home = html.Div([
             {"label": "Papers", "value": "paper"},
             {"label": "Authors", "value": "author"}
             ], multi = True, value=["paper", "author"], 
-            style={"margin-left": "2em", "width": "95%"})
+            style={"margin-left": "2em", "margin-bottom":"6em", "width": "95%"})
         
     
     ],id="home-graph", style={"width": "100%", "height": "85vh"}),
@@ -72,32 +72,31 @@ review_table = review_df()
 menu_items = dbc.Row(
     [
         dbc.Col(
-            html.Button("Create Review", id="create-review-button", n_clicks=0),
+            dbc.Button("Create Review", id="create-review-button", n_clicks=0),
             id="ss", 
-            width="auto"),
+            width={"size": "3"}),
         dbc.Col(
-            html.Button("Open Review", id="select-review-button", n_clicks=0), 
-        width="auto"),
+            dbc.Button("Open Review", id="select-review-button", n_clicks=0), 
+        width={"size": "3"}),
         dbc.Col(
-            html.Button("Download CSV", id="download-csv-button", n_clicks=0), 
-        width="auto"),
-        dbc.Col(
-            html.Button("Graph View", id="graph-view-button", n_clicks=0), 
-        width="auto"),
+            dbc.Button("Download CSV", id="download-csv-button", n_clicks=0), 
+        width={"size": "3"}),
+        dcc.ConfirmDialog(
+            id='confirm-download',
+            message='Your reviews were downloaded as CSV!',
+        )
     ],
-    no_gutters=True,
-    className="ml-auto flex-nowrap mt-3 mt-md-0",
-    align="center",
+
 )
 
 menu = dbc.Navbar(
     [
-        dbc.NavbarToggler(id="navbar-toggler"),
-        dbc.Collapse(menu_items, id="navbar-collapse", navbar=True),
+        menu_items,
+        dbc.NavbarToggler(id="navbar-toggler")
     ],
     color="dark",
     dark=True,
-    style={"position": "absolute", "bottom": 0},
+    style={"position": "absolute", "bottom": 0, "width": "100%"},
     id="menu")
 
 table_div = html.Div([
@@ -108,28 +107,45 @@ table_div = html.Div([
                 'whiteSpace': 'normal',
                 'height': 'auto',
             },
-            style_cell_conditional=[
-            {'if': {'column_id': 'DESCRIPTION'},
-             'width': '60%'}
-            ],
             data=review_table.to_dict("rows"),
-            columns=[{"name": i, "id": i} for i in review_table.columns],
+            columns=[{"name": i, "id": i, "editable": False if i == "id" else True} for i in review_table.columns] ,
+            editable=True,
+            row_deletable=True
         ),
         menu
         ], id="table-div")
 
 
 # Review layout
+
 review = html.Div([
     html.Div([
         html.Div([
-        table_div
-        ], id="table-div-content")
-    ], id="reviews-table-div"),
-    html.Div([html.P(id="review-content-output")], id="review-content",  style={"width": "0%"})
-    
-    
-], className="row", style={"padding": "1em", "height": "83vh"})
+            html.Div([
+                html.Div([
+                    html.Div([
+                        html.Div([
+                            table_div
+                        ], id="callback-open-description-div")
+                    ], id="callback-return-description-div", style={"width": "100%"}),
+                ], id="callback-create-review-div"),
+            ], id="callback-cancel-review-div"),
+        ], id="callback-created-review-div"),
+    ], id="callback-research-div"),
+    html.Div([html.P(id="review-content-output")], id="review-content",  style={"width": "0%"}),
+    html.Div([
+        html.Div([html.P(id="review-create-output")], id="review-create",  style={"width": "0%"}),
+    ], id="view-review-callback-div", style={"width": "100%"}),
+    html.Div([
+        html.Div([html.P(id="created-review-output")], id="created-review",  style={"width": "0%"})
+    ],id="callback-return-created-review-div"),
+    html.Div([
+        html.Div([html.P(id="research-output")], id="research", style={"width": "0%"})
+    ], id="next-callback2")
+], className="row", style={"padding": "1em", "height": "90vh"})
+
+
+
 
 pages = {"home": home,
          "review": review}
