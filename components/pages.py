@@ -72,36 +72,31 @@ review_table = review_df()
 menu_items = dbc.Row(
     [
         dbc.Col(
-            html.Button("Create Review", id="create-review-button", n_clicks=0),
+            dbc.Button("Create Review", id="create-review-button", n_clicks=0),
             id="ss", 
-            width="auto"),
+            width={"size": "3"}),
         dbc.Col(
-            html.Button("Open Review", id="select-review-button", n_clicks=0), 
-        width="auto"),
+            dbc.Button("Open Review", id="select-review-button", n_clicks=0), 
+        width={"size": "3"}),
         dbc.Col(
-            html.Button("Download CSV", id="download-csv-button", n_clicks=0), 
-        width="auto"),
-        dbc.Col(
-            html.Button("Graph View", id="graph-view-button", n_clicks=0), 
-        width="auto"),
-         dcc.ConfirmDialog(
-        id='confirm-download',
-        message='Your reviews were downloaded as CSV!',
+            dbc.Button("Download CSV", id="download-csv-button", n_clicks=0), 
+        width={"size": "3"}),
+        dcc.ConfirmDialog(
+            id='confirm-download',
+            message='Your reviews were downloaded as CSV!',
         )
     ],
-    no_gutters=True,
-    className="ml-auto flex-nowrap mt-3 mt-md-0",
-    align="center",
+
 )
 
 menu = dbc.Navbar(
     [
-        dbc.NavbarToggler(id="navbar-toggler"),
-        dbc.Collapse(menu_items, id="navbar-collapse", navbar=True),
+        menu_items,
+        dbc.NavbarToggler(id="navbar-toggler")
     ],
     color="dark",
     dark=True,
-    style={"position": "absolute", "bottom": 0},
+    style={"position": "absolute", "bottom": 0, "width": "100%"},
     id="menu")
 
 table_div = html.Div([
@@ -123,11 +118,13 @@ table_div = html.Div([
 review = html.Div([
     html.Div([
         html.Div([
-        table_div
-        ], id="table-div-content")
-    ], id="reviews-table-div", style={"width": "100%"}),
-    html.Div([html.P(id="review-content-output")], id="review-content",  style={"width": "0%"})
-    
+            html.Div([
+                table_div
+                ], id="table-div-content")
+        ], id="reviews-table-div", style={"width": "100%"}),
+    ], id="reviews-table-div2"),
+    html.Div([html.P(id="review-content-output")], id="review-content",  style={"width": "0%"}),
+    html.Div([html.P(id="review-create-output")], id="review-create",  style={"width": "0%"})
     
 ], className="row", style={"padding": "1em", "height": "83vh"})
 

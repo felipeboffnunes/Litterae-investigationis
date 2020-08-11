@@ -12,6 +12,7 @@ from dash.dependencies import Input, Output, State
 # Components
 from components.pages import pages, table_div
 from components.graph_manager import getGraphData
+from components.create_review_form import form
 
 # App setup
 external_stylesheets = [dbc.themes.LUX]
@@ -61,7 +62,7 @@ menu = dbc.Navbar(
     id="menu")
 
 # App layout
-app.layout = html.Div([dcc.Location(id="url"),menu, content], id="layout")
+app.layout = html.Div([dcc.Location(id="url"),menu, content], id="layout", style={"overflow":"hidden"})
 
 # Callbacks
 #
@@ -208,3 +209,20 @@ def download_reviews(data):
     if data:
         return True
     return False
+
+
+
+@app.callback([Output("reviews-table-div2", "children"),
+               Output("review-create-output", "children"),
+               Output("review-create", "style")],
+              [Input('create-review-button', 'n_clicks')])
+def create_review(data):
+    
+    if data:
+        return [None, form, {"width": "97%", "padding-left": "2em"}]
+        
+    return [html.Div([
+            html.Div([
+                table_div
+                ], id="table-div-content")
+        ], id="reviews-table-div", style={"width": "100%"}), html.P(id="review-create-output"), {"width": "0%"}]
