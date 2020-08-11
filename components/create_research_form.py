@@ -1,12 +1,12 @@
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 
-title_input = dbc.FormGroup(
+search_string_input = dbc.FormGroup(
     [
-        dbc.Label("Title", html_for="review-title-row", width=2),
+        dbc.Label("Search String", html_for="search-string-row", width=2),
         dbc.Col(
             dbc.Input(
-                type="text", id="review-title-row", placeholder="Enter title"
+                type="text", id="search-string-row", placeholder="Enter title"
             ),
             width=10,
         ),
@@ -14,14 +14,28 @@ title_input = dbc.FormGroup(
     row=True,
 )
 
-authors_input = dbc.FormGroup(
+date_input = dbc.FormGroup(
     [
-        dbc.Label("Authors", html_for="authors-row", width=2),
+        dbc.Label("Date", html_for="date-row", width=2),
+        dbc.Col(
+            dcc.DatePickerRange(
+                id="date-row",
+                display_format="D/M/Y"
+            ),
+            width=10,
+        ),
+    ],
+    row=True,
+)
+
+inclusion_input = dbc.FormGroup(
+    [
+        dbc.Label("Inclusion", html_for="inclusion-row", width=2),
         dbc.Col(
             dbc.Input(
                 type="text",
-                id="authors-row",
-                placeholder="Enter authors",
+                id="inclusion-row",
+                placeholder="Enter inclusion criteria",
             ),
             width=10,
         ),
@@ -29,28 +43,13 @@ authors_input = dbc.FormGroup(
     row=True,
 )
 
-keywords_input = dbc.FormGroup(
+exclusion_input = dbc.FormGroup(
     [
-        dbc.Label("Keywords", html_for="keywords-row", width=2),
-        dbc.Col(
-            dbc.Input(
-                type="text",
-                id="keywords-row",
-                placeholder="Enter keywords",
-            ),
-            width=10,
-        ),
-    ],
-    row=True,
-)
-
-description_input = dbc.FormGroup(
-    [
-        dbc.Label("Description", html_for="description-row", width=2),
+        dbc.Label("Exclusion", html_for="exclusion-row", width=2),
         dbc.Col(
             dbc.Textarea(
-                id="description-row",
-                placeholder="Enter description",
+                id="exclusion-row",
+                placeholder="Enter exclusion criteria",
             ),
             width=10,
         ),
@@ -62,7 +61,7 @@ databases_input = dbc.FormGroup(
     [
         dbc.Label("Databases", html_for="databases-row", width=2),
         dbc.Col(
-            dbc.RadioItems(
+            dbc.Checklist(
                 id="databases-row",
                 options=[
                     {"label": "ACM Library", "value": 1},
@@ -80,4 +79,4 @@ databases_input = dbc.FormGroup(
     row=True,
 )
 
-review_form = dbc.Form([title_input, authors_input, keywords_input, description_input, databases_input])
+research_form = dbc.Form([search_string_input, date_input, inclusion_input, exclusion_input, databases_input])

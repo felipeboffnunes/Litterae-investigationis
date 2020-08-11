@@ -12,7 +12,8 @@ from dash.dependencies import Input, Output, State
 # Components
 from components.pages import pages, table_div
 from components.graph_manager import getGraphData
-from components.create_review_form import form
+from components.create_review_form import review_form
+from components.create_research_form import research_form
 
 # App setup
 external_stylesheets = [dbc.themes.LUX]
@@ -154,14 +155,49 @@ def displayTapNodeData(data):
 def filterGraphData(data):
     return getGraphData(data)
 
+# Review data
+review_menu_items = dbc.Row(
+    [
+        dbc.Col(
+            dbc.Button("Go back", id="return-review-button", n_clicks=0),
+            id="ss", 
+            width={"size": "3"}),
+        dbc.Col(
+            dbc.Button("Do research", id="research-review-button", n_clicks=0),
+            id="sq", 
+            width={"size": "3", "offset": "2"}),
+    ],
+
+)
+review_menu = dbc.Navbar(
+    [
+        review_menu_items,
+        dbc.NavbarToggler(id="navbar-toggler")
+    ],
+    color="dark",
+    dark=True,
+    style={"position": "absolute", "bottom": 0, "left":0, "width": "100%"},
+    id="review-menu")
+
+review_menu = dbc.Navbar(
+    [
+        review_menu_items,
+        dbc.NavbarToggler(id="navbar-toggler")
+    ],
+    color="dark",
+    dark=True,
+    style={"position": "absolute", "bottom": 0, "left":0, "width": "100%"},
+    id="menu")
+
+
 # Review callbacks
 @app.callback([Output('review-content-output', 'children'),
               Output('review-content', 'style'),
-              Output("table-div-content", "children")],
+              Output("callback-open-description-div", "children")],
                   [Input('select-review-button', 'n_clicks'),
                    Input("reviews-table", "value")],
                   [State("reviews-table", "active_cell")])
-def toggle_review(data, table, state):
+def open_description(data, table, state):
     if state and data:
         idx = state["row_id"]
         try:
@@ -180,20 +216,20 @@ def toggle_review(data, table, state):
                     html.P(result[2]),
                     html.P(result[3]),
                     html.P(result[4]),
-                    html.Button("Return", id="return-review-button", n_clicks=0)
+                    review_menu
                     ], id="description-review"), {"width": "100%"}, None]
         except:
             pass
     return
 
-@app.callback([Output("reviews-table-div", "children"),
+@app.callback([Output("callback-return-description-div", "children"),
                Output("description-review", "children")],
                   [Input('return-review-button', 'n_clicks')])
 def return_to_reviews(data):
     if data:
         return [html.Div([
                 table_div
-                ], id="table-div-content"), None]
+                ], id="callback-open-description-div"), None]
     return
 
 
@@ -213,7 +249,7 @@ def download_reviews(data):
 
 # Create Review
 
-menu_items = dbc.Row(
+create_menu_items = dbc.Row(
     [
         dbc.Col(
             dbc.Button("Create Review", id="created-review-button", n_clicks=0),
@@ -227,9 +263,9 @@ menu_items = dbc.Row(
 
 )
 
-menu = dbc.Navbar(
+create_menu = dbc.Navbar(
     [
-        menu_items,
+        create_menu_items,
         dbc.NavbarToggler(id="navbar-toggler")
     ],
     color="dark",
@@ -237,23 +273,23 @@ menu = dbc.Navbar(
     style={"position": "absolute", "bottom": 0, "left":0, "width": "100%"},
     id="menu")
 
-@app.callback([Output("reviews-table-div2", "children"),
+@app.callback([Output("callback-create-review-div", "children"),
                Output("review-create-output", "children"),
                Output("review-create", "style")],
               [Input('create-review-button', 'n_clicks')])
 def create_review(data):
     
     if data:
-        return [None, html.Div([form,menu]), {"width": "97%", "padding-left": "2em"}]
+        return [None, html.Div([review_form,create_menu]), {"width": "97%", "padding-left": "2em"}]
         
     return [html.Div([
             html.Div([
                 table_div
-                ], id="table-div-content")
-        ], id="reviews-table-div", style={"width": "100%"}), html.P(id="review-create-output"), {"width": "0%"}]
+                ], id="callback-open-description-div")
+        ], id="callback-return-description-div", style={"width": "100%"}), html.P(id="review-create-output"), {"width": "0%"}]
     
 
-@app.callback(Output("reviews-table-div3", "children"),
+@app.callback(Output("callback-cancel-review-div", "children"),
               [Input("cancel-review-button", "n_clicks")])
 def cancel_review(data):
     if data:
@@ -261,11 +297,34 @@ def cancel_review(data):
                 html.Div([
                     html.Div([
                         table_div
-                        ], id="table-div-content")
-                ], id="reviews-table-div", style={"width": "100%"}),
-            ], id="reviews-table-div2"),
+                        ], id="callback-open-description-div")
+                ], id="callback-return-description-div", style={"width": "100%"}),
+            ], id="callback-create-review-div"),
     return
 
+
+review2_menu_items = dbc.Row(
+    [
+        dbc.Col(
+            dbc.Button("Go back", id="return2-review-button", n_clicks=0),
+            id="ss", 
+            width={"size": "3"}),
+        dbc.Col(
+            dbc.Button("Do research", id="research2-review-button", n_clicks=0),
+            id="sq", 
+            width={"size": "3", "offset": "2"}),
+    ],
+
+)
+review2_menu = dbc.Navbar(
+    [
+        review2_menu_items,
+        dbc.NavbarToggler(id="navbar-toggler")
+    ],
+    color="dark",
+    dark=True,
+    style={"position": "absolute", "bottom": 0, "left":0, "width": "100%"},
+    id="review-menu")
 
 @app.callback([Output("created-review", "children"),
                Output("created-review", "style"),
@@ -297,16 +356,48 @@ def view_created_review(data, title, authors, keywords, description ):
             cursor.execute(f"""
             SELECT * FROM reviews WHERE name = "{title}";               
             """)
-            print("hey")
+            
             result = cursor.fetchone()
-            print(result)
             return [html.Div([
                         html.H3(result[1]),
                         html.P(result[2]),
                         html.P(result[3]),
                         html.P(result[4]),
-                        html.Button("Return", id="return-created-review-button", n_clicks=0)
-                        ], id="description-review"), {"padding-left": "2em","width": "100%"}, None]
+                        review2_menu
+                        ], id="description-review"), {"padding-left": "2em","width": "100%"}, 
+                    
+                    html.Div([html.P(id="review-create-output")], 
+                    id="review-create",  style={"width": "0%"})]
         except:
             pass
     return html.P("hey")
+
+
+@app.callback([Output("callback-created-review-div", "children"),
+               Output("callback-return-created-review-div", "children")],
+              [Input("return2-review-button", "n_clicks")])
+def return_created_review(data):
+    if data:
+        return [html.Div([
+                html.Div([
+                    html.Div([
+                        html.Div([
+                            table_div
+                        ], id="callback-open-description-div")
+                    ], id="callback-return-description-div", style={"width": "100%"}),
+                ], id="callback-create-review-div"),
+            ], id="callback-cancel-review-div"), 
+                
+                html.Div([html.P(id="created-review-output")], 
+                id="created-review",  style={"width": "0%"})]
+    return
+
+@app.callback([Output("research-output", "children"),
+               Output("research", "style"),
+               Output("callback-research-div", "children")],
+              [Input("research-review-button", "n_clicks")])
+def research(data):
+    print(data)
+    if data:
+        return [html.Div([research_form]), {"width": "100%"}, None]
+    return

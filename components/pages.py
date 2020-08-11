@@ -108,7 +108,9 @@ table_div = html.Div([
                 'height': 'auto',
             },
             data=review_table.to_dict("rows"),
-            columns=[{"name": i, "id": i} for i in review_table.columns],
+            columns=[{"name": i, "id": i, "editable": False if i == "id" else True} for i in review_table.columns] ,
+            editable=True,
+            row_deletable=True
         ),
         menu
         ], id="table-div")
@@ -121,18 +123,29 @@ review = html.Div([
         html.Div([
             html.Div([
                 html.Div([
-                    table_div
-                    ], id="table-div-content")
-            ], id="reviews-table-div", style={"width": "100%"}),
-        ], id="reviews-table-div2"),
-    ], id="reviews-table-div3"),
+                    html.Div([
+                        html.Div([
+                            table_div
+                        ], id="callback-open-description-div")
+                    ], id="callback-return-description-div", style={"width": "100%"}),
+                ], id="callback-create-review-div"),
+            ], id="callback-cancel-review-div"),
+        ], id="callback-created-review-div"),
+    ], id="callback-research-div"),
     html.Div([html.P(id="review-content-output")], id="review-content",  style={"width": "0%"}),
     html.Div([
         html.Div([html.P(id="review-create-output")], id="review-create",  style={"width": "0%"}),
     ], id="view-review-callback-div", style={"width": "100%"}),
-    html.Div([html.P(id="created-review-output")], id="created-review",  style={"width": "0%"})
-    
+    html.Div([
+        html.Div([html.P(id="created-review-output")], id="created-review",  style={"width": "0%"})
+    ],id="callback-return-created-review-div"),
+    html.Div([
+        html.Div([html.P(id="research-output")], id="research", style={"width": "0%"})
+    ], id="next-callback2")
 ], className="row", style={"padding": "1em", "height": "90vh"})
+
+
+
 
 pages = {"home": home,
          "review": review}
