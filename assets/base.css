@@ -1,3 +1,6 @@
+html,body {
+    overflow: hidden;
+}
 .nav-link.active{
     background: rgb(0, 0, 0);
     color: white;
@@ -12,14 +15,6 @@
     margin-left: 10px;
 }
 
-button {
-    background: white;
-    
-    border-color: white;
-    border-style: solid;
-    border-width: 3px;
-    margin-left: 10px;
-}
 
 .nav-link:hover{
     color: grey;

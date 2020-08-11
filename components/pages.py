@@ -53,7 +53,7 @@ home = html.Div([
             {"label": "Papers", "value": "paper"},
             {"label": "Authors", "value": "author"}
             ], multi = True, value=["paper", "author"], 
-            style={"margin-left": "2em", "width": "95%"})
+            style={"margin-left": "2em", "margin-bottom":"6em", "width": "95%"})
         
     
     ],id="home-graph", style={"width": "100%", "height": "85vh"}),
@@ -115,18 +115,24 @@ table_div = html.Div([
 
 
 # Review layout
+
 review = html.Div([
     html.Div([
         html.Div([
             html.Div([
-                table_div
-                ], id="table-div-content")
-        ], id="reviews-table-div", style={"width": "100%"}),
-    ], id="reviews-table-div2"),
+                html.Div([
+                    table_div
+                    ], id="table-div-content")
+            ], id="reviews-table-div", style={"width": "100%"}),
+        ], id="reviews-table-div2"),
+    ], id="reviews-table-div3"),
     html.Div([html.P(id="review-content-output")], id="review-content",  style={"width": "0%"}),
-    html.Div([html.P(id="review-create-output")], id="review-create",  style={"width": "0%"})
+    html.Div([
+        html.Div([html.P(id="review-create-output")], id="review-create",  style={"width": "0%"}),
+    ], id="view-review-callback-div", style={"width": "100%"}),
+    html.Div([html.P(id="created-review-output")], id="created-review",  style={"width": "0%"})
     
-], className="row", style={"padding": "1em", "height": "83vh"})
+], className="row", style={"padding": "1em", "height": "90vh"})
 
 pages = {"home": home,
          "review": review}

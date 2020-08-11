@@ -211,6 +211,31 @@ def download_reviews(data):
     return False
 
 
+# Create Review
+
+menu_items = dbc.Row(
+    [
+        dbc.Col(
+            dbc.Button("Create Review", id="created-review-button", n_clicks=0),
+            id="ss", 
+            width={"size": "3"}),
+        dbc.Col(
+            dbc.Button("Cancel Review", id="cancel-review-button", n_clicks=0),
+            id="sq", 
+            width={"size": "3", "offset": "2"}),
+    ],
+
+)
+
+menu = dbc.Navbar(
+    [
+        menu_items,
+        dbc.NavbarToggler(id="navbar-toggler")
+    ],
+    color="dark",
+    dark=True,
+    style={"position": "absolute", "bottom": 0, "left":0, "width": "100%"},
+    id="menu")
 
 @app.callback([Output("reviews-table-div2", "children"),
                Output("review-create-output", "children"),
@@ -219,10 +244,69 @@ def download_reviews(data):
 def create_review(data):
     
     if data:
-        return [None, form, {"width": "97%", "padding-left": "2em"}]
+        return [None, html.Div([form,menu]), {"width": "97%", "padding-left": "2em"}]
         
     return [html.Div([
             html.Div([
                 table_div
                 ], id="table-div-content")
         ], id="reviews-table-div", style={"width": "100%"}), html.P(id="review-create-output"), {"width": "0%"}]
+    
+
+@app.callback(Output("reviews-table-div3", "children"),
+              [Input("cancel-review-button", "n_clicks")])
+def cancel_review(data):
+    if data:
+        return html.Div([
+                html.Div([
+                    html.Div([
+                        table_div
+                        ], id="table-div-content")
+                ], id="reviews-table-div", style={"width": "100%"}),
+            ], id="reviews-table-div2"),
+    return
+
+
+@app.callback([Output("created-review", "children"),
+               Output("created-review", "style"),
+               Output("view-review-callback-div", "children")],
+              [Input("created-review-button", "n_clicks")],
+              [State("review-title-row", "value"),
+               State("authors-row", "value"),
+               State("keywords-row", "value"),
+               State("description-row", "value")])
+def view_created_review(data, title, authors, keywords, description ):
+    if(data):
+        try:
+            conn = sqlite3.connect("./database/reviews.db")
+            
+            cursor = conn.cursor()
+
+            cursor.execute(f"""
+            INSERT INTO reviews (name, authors, tags, description)
+            VALUES ("{title}", "{authors}", "{keywords}", "{description}")
+            """)
+            
+            conn.commit()
+        except:
+            pass
+        try:
+            conn = sqlite3.connect("./database/reviews.db")
+            
+            cursor = conn.cursor()
+            cursor.execute(f"""
+            SELECT * FROM reviews WHERE name = "{title}";               
+            """)
+            print("hey")
+            result = cursor.fetchone()
+            print(result)
+            return [html.Div([
+                        html.H3(result[1]),
+                        html.P(result[2]),
+                        html.P(result[3]),
+                        html.P(result[4]),
+                        html.Button("Return", id="return-created-review-button", n_clicks=0)
+                        ], id="description-review"), {"padding-left": "2em","width": "100%"}, None]
+        except:
+            pass
+    return html.P("hey")
