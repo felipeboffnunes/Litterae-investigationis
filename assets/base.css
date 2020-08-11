@@ -19,3 +19,23 @@
 .navbar {
     height: 60px;
 }
+
+
+
+.cell-table > tbody {
+    display:block !important;
+    width: 98%;
+    padding-left: 2em;
+}
+
+.cell-table {
+    display:block !important
+}
+
+.row.row-1 {
+    display:block !important
+}
+
+.row.row-0 {
+    display:block !important
+}
