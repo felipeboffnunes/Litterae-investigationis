@@ -1,13 +1,16 @@
 # -*- coding: utf-8 -*-
 
 # Libraries
+import sqlite3
 import dash
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 import dash_html_components as html
-from dash.dependencies import Input, Output
+from dash.dependencies import Input, Output, State
+
 # Components
-from components.pages import pages
+from components.pages import pages, table_div
+from components.graph_manager import getGraphData
 
 # App setup
 external_stylesheets = [dbc.themes.LUX]
@@ -78,7 +81,7 @@ def render_page_content(pathname):
     if pathname in ["/", "/page-1"]:
         return pages["home"]
     elif pathname in ["/page-2"]:
-        return pages["home"]
+        return pages["review"]
     # If the user tries to reach a different page, return a 404 message
     return dbc.Jumbotron(
         [
@@ -91,8 +94,102 @@ def render_page_content(pathname):
 # Pages callbacks
 #
 # Home callbacks
-@app.callback(Output('cytoscape-tapNodeData-output', 'children'),
+@app.callback([Output('cytoscape-tapNodeData-output', 'children'),
+               Output("home-graph-content", "style"), 
+               Output("home-graph", "style")],
                   [Input('cytoscape-two-nodes', 'tapNodeData')])
 def displayTapNodeData(data):
     if data:
-        return "You recently clicked/tapped the city: " + data['label']
+        if data["id"][:6] == "paper:":
+            doi = data["id"][6:]
+            try:
+                conn = sqlite3.connect("./database/home_graph.db")
+                
+                cursor = conn.cursor()
+                
+                
+                cursor.execute(f"""
+                SELECT * FROM papers WHERE doi = "{doi}";
+                """)    
+                
+                result = cursor.fetchone()
+                return [html.Div([
+                        html.H3(result[1]),
+                        html.P(result[2]),
+                        html.P(result[3]),
+                        html.Hr(),
+                        html.P(result[4])
+                        ]), {"width": "60%"}, {"width": "40%"}]
+            except: 
+                pass
+        
+        elif data["id"][:7] == "author:":
+            name = data["label"].replace("_", " ")
+            try:
+                conn = sqlite3.connect("./database/authors.db")
+                
+                cursor = conn.cursor()
+                
+                
+                cursor.execute(f"""
+                SELECT * FROM authors WHERE name = "{name}";
+                """)    
+                
+                result = cursor.fetchone()
+                return [html.Div([
+                        html.H3(result[1]),
+                        html.P(result[2]),
+                        ]), {"width": "60%"}, {"width": "40%"}]
+            except:
+                pass
+            
+        return ["We haven't found any data on: " + data['label'], {"width": "60%"}, {"width": "40%"}]
+    return [None, {"width": "0%"}, {"width": "100%"} ]
+
+
+@app.callback(Output('cytoscape-two-nodes', 'elements'),
+                  [Input('dropdown-graph-filter', 'value')])
+def filterGraphData(data):
+    return getGraphData(data)
+
+# Review callbacks
+@app.callback([Output('review-content-output', 'children'),
+              Output('review-content', 'style'),
+              Output("table-div-content", "children")],
+                  [Input('select-review-button', 'n_clicks'),
+                   Input("reviews-table", "value")],
+                  [State("reviews-table", "active_cell")])
+def toggle_review(data, table, state):
+    if state and data:
+        idx = state["row_id"]
+        try:
+            conn = sqlite3.connect("./database/reviews.db")
+                    
+            cursor = conn.cursor()
+            
+            cursor.execute(f"""
+            SELECT * FROM reviews WHERE id = "{idx}";
+            """)   
+            
+            result = cursor.fetchone()
+            
+            return [html.Div([
+                    html.H3(result[1]),
+                    html.P(result[2]),
+                    html.P(result[3]),
+                    html.P(result[4]),
+                    html.Button("Return", id="return-review-button", n_clicks=0)
+                    ], id="description-review"), {"width": "100%"}, None]
+        except:
+            pass
+    return
+
+@app.callback([Output("reviews-table-div", "children"),
+               Output("description-review", "children")],
+                  [Input('return-review-button', 'n_clicks')])
+def return_to_reviews(data):
+    if data:
+        return [html.Div([
+                table_div
+                ], id="table-div-content"), None]
+    return
