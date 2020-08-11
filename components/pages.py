@@ -84,6 +84,10 @@ menu_items = dbc.Row(
         dbc.Col(
             html.Button("Graph View", id="graph-view-button", n_clicks=0), 
         width="auto"),
+         dcc.ConfirmDialog(
+        id='confirm-download',
+        message='Your reviews were downloaded as CSV!',
+        )
     ],
     no_gutters=True,
     className="ml-auto flex-nowrap mt-3 mt-md-0",
@@ -108,10 +112,6 @@ table_div = html.Div([
                 'whiteSpace': 'normal',
                 'height': 'auto',
             },
-            style_cell_conditional=[
-            {'if': {'column_id': 'DESCRIPTION'},
-             'width': '60%'}
-            ],
             data=review_table.to_dict("rows"),
             columns=[{"name": i, "id": i} for i in review_table.columns],
         ),
@@ -125,7 +125,7 @@ review = html.Div([
         html.Div([
         table_div
         ], id="table-div-content")
-    ], id="reviews-table-div"),
+    ], id="reviews-table-div", style={"width": "100%"}),
     html.Div([html.P(id="review-content-output")], id="review-content",  style={"width": "0%"})
     
     

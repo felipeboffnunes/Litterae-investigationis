@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # Libraries
+import pandas as pd
 import sqlite3
 import dash
 import dash_bootstrap_components as dbc
@@ -193,3 +194,17 @@ def return_to_reviews(data):
                 table_div
                 ], id="table-div-content"), None]
     return
+
+
+@app.callback(Output("confirm-download", "displayed"),
+              [Input('download-csv-button', 'n_clicks')])
+def download_reviews(data):
+    try:
+        conn = sqlite3.connect("./database/reviews.db")
+        db_df = pd.read_sql_query("SELECT * FROM reviews", conn)
+        db_df.to_csv("reviews.csv", index=True)
+    except:
+        pass
+    if data:
+        return True
+    return False
