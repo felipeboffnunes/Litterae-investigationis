@@ -79,4 +79,4 @@ databases_input = dbc.FormGroup(
     row=True,
 )
 
-research_form = dbc.Form([search_string_input, date_input, inclusion_input, exclusion_input, databases_input])
+research_form = dbc.Form([search_string_input, date_input, inclusion_input, exclusion_input, databases_input], style={"width": "100%"})

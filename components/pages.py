@@ -137,11 +137,16 @@ review = html.Div([
         html.Div([html.P(id="review-create-output")], id="review-create",  style={"width": "0%"}),
     ], id="view-review-callback-div", style={"width": "100%"}),
     html.Div([
-        html.Div([html.P(id="created-review-output")], id="created-review",  style={"width": "0%"})
-    ],id="callback-return-created-review-div"),
+        html.Div([
+            html.Div([html.P(id="created-review-output")], id="created-review",  style={"width": "0%"})
+        ],id="callback-return-created-review-div"),
+    ], id="callback-go-do-research-div"),
     html.Div([
         html.Div([html.P(id="research-output")], id="research", style={"width": "0%"})
-    ], id="next-callback2")
+    ], id="callback-do-research-div"),
+    html.Div([
+        html.Div([html.P(id="do-research-output")], id="do-research", style={"width": "0%"})
+    ])
 ], className="row", style={"padding": "1em", "height": "90vh"})
 
 
