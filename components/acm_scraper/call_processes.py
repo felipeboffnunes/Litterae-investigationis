@@ -1,11 +1,13 @@
 import sys
 import time
 import multiprocessing
-from csv_merger import concatenate_csv
 from pathos.multiprocessing import ProcessPool as Pool
-from processing import process_page, create_urls, parse_search_term
+from components.acm_scraper.processing import process_page, create_urls
+from components.acm_scraper.csv_merger import concatenate_csv
 
-def call_processes(url, pages):
+def call_processes(url, name):
+    multiprocessing.freeze_support()
+    pages = process_page(url, find_pages=True, page_size=50)
     urls = create_urls(50, int(pages), url)
     
     start = time.time()
@@ -14,14 +16,10 @@ def call_processes(url, pages):
     end = time.time()
     print('Full Run: ', end - start)
     p.clear()
+    
+    concatenate_csv(name)
+    
+    return True
 
-
-if __name__ == "__main__":
-    multiprocessing.freeze_support()
-
-    search_term = sys.argv[1]
-    pages = sys.argv[2]
-
-    call_processes(search_term, pages)
 
 

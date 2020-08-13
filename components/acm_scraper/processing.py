@@ -16,7 +16,6 @@ def process_page(url, find_pages=False, page_size=50):
     # Returns the number of pages in the full search
     def how_many_pages(url, http, http_collector, page_size):
         page = get_page(url, http, http_collector, 3)
-        print("TRIED")
         content = BeautifulSoup(page.content, 'lxml')
 
         result_count = content.find('span', class_='result__count').text
@@ -174,7 +173,7 @@ def process_page(url, find_pages=False, page_size=50):
 
     page = get_page(url, http, http_collector, 3)
     results_list = get_results_list(page, http, http_collector)
-    write_csv(results_list, path)
+    write_csv(results_list)
     return 
 
 # Returns list of urls for scraping

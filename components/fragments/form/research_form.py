@@ -1,4 +1,5 @@
 import dash_bootstrap_components as dbc
+import dash_html_components as html
 import dash_core_components as dcc
 
 search_string_input = dbc.FormGroup(
@@ -27,6 +28,7 @@ date_input = dbc.FormGroup(
     ],
     row=True,
 )
+
 
 inclusion_input = dbc.FormGroup(
     [
@@ -65,7 +67,13 @@ databases_input = dbc.FormGroup(
                 id="databases-row",
                 options=[
                     {"label": "ACM Library", "value": 1},
-                    {"label": "Google Scholar", "value": 2},
+                    
+                    {
+                        "label": "Google Scholar", 
+                        "value": 2,
+                        "disabled": True,
+                    },
+                    
                     {
                         "label": "Elsevier",
                         "value": 3,
@@ -78,5 +86,6 @@ databases_input = dbc.FormGroup(
     ],
     row=True,
 )
+
 
 research_form = dbc.Form([search_string_input, date_input, inclusion_input, exclusion_input, databases_input], style={"width": "100%"})

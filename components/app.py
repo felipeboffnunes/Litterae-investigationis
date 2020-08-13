@@ -3,8 +3,11 @@ import os
 # Libraries
 import pandas as pd
 import sqlite3
+import time
+
 from flask_caching import Cache
 import dash
+import dash_table
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 import dash_html_components as html
@@ -13,8 +16,11 @@ from dash.dependencies import Input, Output, State
 # Components
 from components.pages import pages, table_div
 from components.graph_manager import getGraphData
+from components.acm_scraper.call_processes import call_processes
+from components.csv_manager import get_search_df
+# Fragments
 from components.fragments.form.create_review_form import review_form
-from components.fragments.form.create_research_form import research_form
+
 from components.fragments.menu.review_menu import review_menu
 from components.fragments.menu.create_review_menu import create_menu
 
@@ -35,6 +41,10 @@ server = app.server
 
 # GLOBAL VARIABLES
 REVIEW_ID = ""
+WAIT_SEARCH = False
+GET_SEARCH = False
+START_LOADING = False
+END_LOADING = False
 
 
 # App content
@@ -96,6 +106,8 @@ def render_page_content(pathname):
         return pages["review"]
     elif pathname in ["/page-4"]:
         return pages["create-review"]
+    elif pathname in ["/page-5"]:
+        return pages["research"]
     # If the user tries to reach a different page, return a 404 message
     return dbc.Jumbotron(
         [
@@ -184,7 +196,7 @@ def store_review(idx):
                 html.P(result[3]),
                 html.P(result[4]),
                 review_menu
-                ], id="review-output", style={"widht": "100%"})
+                ], id="review-content", style={"widht": "100%"})
     except:
         pass
     return 
@@ -195,10 +207,34 @@ def load_review(click):
     global REVIEW_ID
     if click:
         return store_review(REVIEW_ID)    
-    
-create_review = html.Div([review_form,create_menu, html.Div(id="callback-created-review")])
-review = html.Div([html.Div(id="open-review"), html.Div(id="open-created-review")], id="review-output")
 
+@app.callback(Output('start-loading', 'children'),
+                  [Input('review-output', 'children')])
+def start_loader(click):
+    global WAIT_SEARCH
+    global GET_SEARCH
+    global START_LOADING
+    global END_LOADING
+    if click and START_LOADING:
+        while not WAIT_SEARCH and not GET_SEARCH and not END_LOADING:
+            time.sleep(20)
+        
+        spinner = dbc.Spinner()
+        return spinner
+    return None
+    
+@app.callback(Output('end-loading', 'children'),
+                  [Input('review-output', 'children')])
+def end_loader(click):
+    global WAIT_SEARCH
+    global GET_SEARCH
+    time.sleep(5)
+    if click:
+        if GET_SEARCH:
+            return html.Div(id="start-loading")
+        while WAIT_SEARCH:
+            time.sleep(5)
+    return html.Div(id="start-loading")
 
 # Review callbacks
 @app.callback([Output('callback-open-review', 'children')],
@@ -206,9 +242,12 @@ review = html.Div([html.Div(id="open-review"), html.Div(id="open-created-review"
                    Input("reviews-table", "value")],
                   [State("reviews-table", "active_cell")])
 def open_review(click, table, state):
-    if state and click:
-        idx = state["row_id"]
-        
+    if click:  
+        if state == None:
+            idx = 1
+        else:
+            idx = state["row_id"]
+
         global REVIEW_ID
         REVIEW_ID = idx
         
@@ -264,42 +303,71 @@ def view_created_review(click, title, authors, keywords, description ):
         
     return None
 
-research_menu_items = dbc.Row(
-    [
-        dbc.Col(
-            dbc.Button("Go back", id="return2-review-button", n_clicks=0),
-            id="ss", 
-            width={"size": "3"}),
-        dbc.Col(
-            dbc.Button("Do research", id="research2-review-button", n_clicks=0),
-            id="sq", 
-            width={"size": "3", "offset": "2"}),
-    ],
+def get_name_by_id():
+    global REVIEW_ID
+    conn = sqlite3.connect("./database/reviews.db")
+            
+    cursor = conn.cursor()
+        
+    cursor.execute(f"""
+    SELECT name FROM reviews WHERE id = "{REVIEW_ID}";               
+    """)
 
-)
-research_menu = dbc.Navbar(
-    [
-        research_menu_items,
-        dbc.NavbarToggler(id="navbar-toggler")
-    ],
-    color="dark",
-    dark=True,
-    style={"position": "absolute", "bottom": 0, "left":0, "width": "100%"},
-    id="review-menu")
+    result = cursor.fetchone()
+    return result[0]
 
-@app.callback([Output("research-output", "children"),
-               Output("research", "style"),
-               Output("review-content", "children")],
-              [Input("research-review-button", "n_clicks")])
-def research(data):
-    if data:
-        return [html.Div([research_form, research_menu], style={"padding-left": "2em", "width": "100%", "height": "90vh"}), 
-                {"width": "100%"}, html.Div([html.P(id="review-content-output")], id="review-content",  style={"width": "0%"})]
-    return
+def get_csv_name(name):
+    name = name.replace(" ", "_")
+    if len(name) > 20:
+        i = name.rfind(" ", 0, 20)
+        name = name[:i]
+    return name
 
-@app.callback([Output("do-research-output", "children"),
-               Output("do-research", "style"),
-               Output("callback-do-research-div", "children")],
-              [Input("research-review-button", "n_clicks")])
-def do_research(data):
-    pass
+@app.callback([Output("results-search", "children")],
+              [Input("callback-wait-search", "children")])
+def get_search(click):
+    global WAIT_SEARCH
+    global GET_SEARCH
+    global REVIEW_ID
+    if WAIT_SEARCH:
+        while not GET_SEARCH:
+            time.sleep(5)
+        if GET_SEARCH:
+            WAIT_SEARCH = False
+            END_LOADING = True
+            name = get_name_by_id()
+            name = get_csv_name(name)
+            
+            search_data = get_search_df(name)
+            search_table = dash_table.DataTable(
+                id="search-table",
+                #style_table={'overflowX': 'auto'},
+                style_cell={
+                    'whiteSpace': 'normal',
+                    'height': 'auto',
+                },
+                data=search_data.to_dict("rows"),
+                columns=[{"name": i, "id": i, "editable": False if i == "id" else True} for i in search_data.columns]
+            )
+            
+            return [search_table]
+    return [None]    
+        
+
+@app.callback([Output("callback-search", "children")],
+              [Input("search-button", "n_clicks")],
+              [State("search-string-row", "value")])
+def search(click, url):
+    if click:
+        name = get_name_by_id()
+        name = get_csv_name(name)
+            
+        global GET_SEARCH
+        global WAIT_SEARCH
+        global START_LOADING
+        START_LOADING = True
+        WAIT_SEARCH = True
+        GET_SEARCH = call_processes(url, name) 
+        START_LOADING = False
+        
+    return None

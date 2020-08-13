@@ -9,8 +9,12 @@ import dash_table
 # Components
 from components.graph_manager import getGraphData
 from components.db_manager import review_df
+
+
 # Fragments
 from components.fragments.form.create_review_form import review_form
+from components.fragments.form.research_form import research_form
+from components.fragments.menu.research_menu import research_menu
 from components.fragments.menu.create_review_menu import create_menu
 from components.fragments.menu.reviews_menu import reviews_menu
 # Home
@@ -92,14 +96,36 @@ table_div = html.Div([
 # Review layout
 reviews = html.Div([
             table_div,
-            html.Div(id="callback-open-review")
-            
+            html.Div(id="callback-open-review")      
         ], id="reviews-div", className="row", style={"padding": "1em", "height": "90vh"})
 
 
-create_review = html.Div([review_form,create_menu, html.Div(id="callback-created-review")])
-review = html.Div([html.Div(id="open-review"), html.Div(id="open-created-review")], id="review-output")
+create_review = html.Div([
+                    review_form,
+                    create_menu, 
+                    html.Div(id="callback-created-review")
+                ])
+
+review = html.Div([
+            html.Div(id="open-review"), 
+            html.Div(id="open-created-review"),
+            html.Div([
+                html.Div(id="start-loading"),
+            ],id="end-loading"),
+            html.Div(id="results-search"), 
+            html.Div(id="callback-wait-search")
+        ], id="review-output")
+
+research = html.Div([
+                html.Div([
+                    research_form, 
+                    research_menu
+                ], id="research"), 
+                html.Div(id="callback-search")
+            ])
+
 pages = {"home": home,
          "reviews": reviews,
          "create-review": create_review,
-         "review": review}
+         "review": review,
+         "research": research}
