@@ -392,12 +392,42 @@ def return_created_review(data):
                 id="created-review",  style={"width": "0%"})]
     return
 
+
+research_menu_items = dbc.Row(
+    [
+        dbc.Col(
+            dbc.Button("Go back", id="return2-review-button", n_clicks=0),
+            id="ss", 
+            width={"size": "3"}),
+        dbc.Col(
+            dbc.Button("Do research", id="research2-review-button", n_clicks=0),
+            id="sq", 
+            width={"size": "3", "offset": "2"}),
+    ],
+
+)
+research_menu = dbc.Navbar(
+    [
+        review2_menu_items,
+        dbc.NavbarToggler(id="navbar-toggler")
+    ],
+    color="dark",
+    dark=True,
+    style={"position": "absolute", "bottom": 0, "left":0, "width": "100%"},
+    id="review-menu")
 @app.callback([Output("research-output", "children"),
                Output("research", "style"),
-               Output("callback-research-div", "children")],
+               Output("review-content", "children")],
               [Input("research-review-button", "n_clicks")])
 def research(data):
-    print(data)
     if data:
-        return [html.Div([research_form]), {"width": "100%"}, None]
+        return [html.Div([research_form, research_menu], style={"padding-left": "2em", "width": "100%", "height": "90vh"}), 
+                {"width": "100%"}, html.Div([html.P(id="review-content-output")], id="review-content",  style={"width": "0%"})]
     return
+
+@app.callback([Output("do-research-output", "children"),
+               Output("do-research", "style"),
+               Output("callback-do-research-div", "children")],
+              [Input("research-review-button", "n_clicks")])
+def do_research(data):
+    pass
