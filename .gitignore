@@ -1,3 +1,5 @@
+# Byte-compiled / optimized / DLL files
 __pycache__/
-desktop-app/
+*.py[cod]
+
 *.csv
