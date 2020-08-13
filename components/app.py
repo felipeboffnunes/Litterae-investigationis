@@ -12,6 +12,8 @@ import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output, State
+import dash_cytoscape as cyto
+
 
 # Components
 from components.pages import pages, table_div
@@ -26,6 +28,9 @@ from components.fragments.menu.create_review_menu import create_menu
 
 # App setup
 external_stylesheets = [dbc.themes.LUX]
+cyto.load_extra_layouts()
+
+
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 app.config.suppress_callback_exceptions = True
 server = app.server
@@ -175,7 +180,10 @@ def displayTapNodeData(data):
 @app.callback(Output('cytoscape-two-nodes', 'elements'),
                   [Input('dropdown-graph-filter', 'value')])
 def filterGraphData(data):
-    return getGraphData(data)
+    name = get_name_by_id()
+    name = get_csv_name(name)
+    
+    return getGraphData("Code_Summarization_SL", data)
 
 
 def store_review(idx):
