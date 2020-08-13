@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
-
+import os
 # Libraries
 import pandas as pd
 import sqlite3
+from flask_caching import Cache
 import dash
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
@@ -12,8 +13,10 @@ from dash.dependencies import Input, Output, State
 # Components
 from components.pages import pages, table_div
 from components.graph_manager import getGraphData
-from components.create_review_form import review_form
-from components.create_research_form import research_form
+from components.fragments.form.create_review_form import review_form
+from components.fragments.form.create_research_form import research_form
+from components.fragments.menu.review_menu import review_menu
+from components.fragments.menu.create_review_menu import create_menu
 
 # App setup
 external_stylesheets = [dbc.themes.LUX]
@@ -21,18 +24,36 @@ app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 app.config.suppress_callback_exceptions = True
 server = app.server
 
+#REDIS
+#CACHE_CONFIG={
+#"CACHE_TYPE":"redis",
+#"CACHE_REDIS_URL": os.environ.get("REDIS_URL","redis://localhost:6379")
+#}
+#
+#cache=Cache()
+#cache.init_app(server,config=CACHE_CONFIG)
+
+# GLOBAL VARIABLES
+REVIEW_ID = ""
+
+
 # App content
 content = html.Div(id="page-content")
 
 menu_items = dbc.Row(
     [
         dbc.Col(
-            dbc.NavLink(html.I("Reader"),
+            dbc.NavLink(html.I("Graph"),
             href="/page-1",
             id="page-1-link"
         ), width="auto"),
         dbc.Col(
-            dbc.NavLink(html.I("Review"),
+            dbc.NavLink(html.I("Reader"),
+            href="/page-3",
+            id="page-3-link"
+        ), width="auto"),
+        dbc.Col(
+            dbc.NavLink(html.I("Reviews"),
             href="/page-2",
             id="page-2-link"
         ), width="auto"),
@@ -60,31 +81,21 @@ menu = dbc.Navbar(
     ],
     color="dark",
     dark=True,
-    id="menu")
+    id="main-menu")
 
 # App layout
 app.layout = html.Div([dcc.Location(id="url"),menu, content], id="layout", style={"overflow":"hidden"})
-
-# Callbacks
-#
-# this callback uses the current pathname to set the active state of the
-# corresponding nav link to true, allowing users to see page they are on
-@app.callback(
-    [Output(f"page-{i}-link", "active") for i in range(1, 3)],
-    [Input("url", "pathname")],
-)
-def toggle_active_links(pathname):
-    if pathname == "/":
-        # Treat page 1 as the homepage / index
-        return True, False
-    return [pathname == f"/page-{i}" for i in range(1, 3)]
 
 @app.callback(Output("page-content", "children"), [Input("url", "pathname")])
 def render_page_content(pathname):
     if pathname in ["/", "/page-1"]:
         return pages["home"]
     elif pathname in ["/page-2"]:
+        return pages["reviews"]
+    elif pathname in ["/page-3"]:
         return pages["review"]
+    elif pathname in ["/page-4"]:
+        return pages["create-review"]
     # If the user tries to reach a different page, return a 404 message
     return dbc.Jumbotron(
         [
@@ -109,7 +120,6 @@ def displayTapNodeData(data):
                 conn = sqlite3.connect("./database/home_graph.db")
                 
                 cursor = conn.cursor()
-                
                 
                 cursor.execute(f"""
                 SELECT * FROM papers WHERE doi = "{doi}";
@@ -155,82 +165,54 @@ def displayTapNodeData(data):
 def filterGraphData(data):
     return getGraphData(data)
 
-# Review data
-review_menu_items = dbc.Row(
-    [
-        dbc.Col(
-            dbc.Button("Go back", id="return-review-button", n_clicks=0),
-            id="ss", 
-            width={"size": "3"}),
-        dbc.Col(
-            dbc.Button("Do research", id="research-review-button", n_clicks=0),
-            id="sq", 
-            width={"size": "3", "offset": "2"}),
-    ],
 
-)
-review_menu = dbc.Navbar(
-    [
-        review_menu_items,
-        dbc.NavbarToggler(id="navbar-toggler")
-    ],
-    color="dark",
-    dark=True,
-    style={"position": "absolute", "bottom": 0, "left":0, "width": "100%"},
-    id="review-menu")
+def store_review(idx):
+    try:
+        conn = sqlite3.connect("./database/reviews.db")
+                
+        cursor = conn.cursor()
+        
+        cursor.execute(f"""
+        SELECT * FROM reviews WHERE id = "{idx}";
+        """)   
+        
+        result = cursor.fetchone()
+        
+        return html.Div([
+                html.H3(result[1]),
+                html.P(result[2]),
+                html.P(result[3]),
+                html.P(result[4]),
+                review_menu
+                ], id="review-output", style={"widht": "100%"})
+    except:
+        pass
+    return 
 
-review_menu = dbc.Navbar(
-    [
-        review_menu_items,
-        dbc.NavbarToggler(id="navbar-toggler")
-    ],
-    color="dark",
-    dark=True,
-    style={"position": "absolute", "bottom": 0, "left":0, "width": "100%"},
-    id="menu")
+@app.callback(Output('open-review', 'children'),
+                  [Input('review-output', 'children')])
+def load_review(click):
+    global REVIEW_ID
+    if click:
+        return store_review(REVIEW_ID)    
+    
+create_review = html.Div([review_form,create_menu, html.Div(id="callback-created-review")])
+review = html.Div([html.Div(id="open-review"), html.Div(id="open-created-review")], id="review-output")
 
 
 # Review callbacks
-@app.callback([Output('review-content-output', 'children'),
-              Output('review-content', 'style'),
-              Output("callback-open-description-div", "children")],
+@app.callback([Output('callback-open-review', 'children')],
                   [Input('select-review-button', 'n_clicks'),
                    Input("reviews-table", "value")],
                   [State("reviews-table", "active_cell")])
-def open_description(data, table, state):
-    if state and data:
+def open_review(click, table, state):
+    if state and click:
         idx = state["row_id"]
-        try:
-            conn = sqlite3.connect("./database/reviews.db")
-                    
-            cursor = conn.cursor()
-            
-            cursor.execute(f"""
-            SELECT * FROM reviews WHERE id = "{idx}";
-            """)   
-            
-            result = cursor.fetchone()
-            
-            return [html.Div([
-                    html.H3(result[1]),
-                    html.P(result[2]),
-                    html.P(result[3]),
-                    html.P(result[4]),
-                    review_menu
-                    ], id="description-review"), {"width": "100%"}, None]
-        except:
-            pass
-    return
-
-@app.callback([Output("callback-return-description-div", "children"),
-               Output("description-review", "children")],
-                  [Input('return-review-button', 'n_clicks')])
-def return_to_reviews(data):
-    if data:
-        return [html.Div([
-                table_div
-                ], id="callback-open-description-div"), None]
-    return
+        
+        global REVIEW_ID
+        REVIEW_ID = idx
+        
+    return [None]
 
 
 @app.callback(Output("confirm-download", "displayed"),
@@ -247,95 +229,15 @@ def download_reviews(data):
     return False
 
 
-# Create Review
 
-create_menu_items = dbc.Row(
-    [
-        dbc.Col(
-            dbc.Button("Create Review", id="created-review-button", n_clicks=0),
-            id="ss", 
-            width={"size": "3"}),
-        dbc.Col(
-            dbc.Button("Cancel Review", id="cancel-review-button", n_clicks=0),
-            id="sq", 
-            width={"size": "3", "offset": "2"}),
-    ],
-
-)
-
-create_menu = dbc.Navbar(
-    [
-        create_menu_items,
-        dbc.NavbarToggler(id="navbar-toggler")
-    ],
-    color="dark",
-    dark=True,
-    style={"position": "absolute", "bottom": 0, "left":0, "width": "100%"},
-    id="menu")
-
-@app.callback([Output("callback-create-review-div", "children"),
-               Output("review-create-output", "children"),
-               Output("review-create", "style")],
-              [Input('create-review-button', 'n_clicks')])
-def create_review(data):
-    
-    if data:
-        return [None, html.Div([review_form,create_menu]), {"width": "97%", "padding-left": "2em"}]
-        
-    return [html.Div([
-            html.Div([
-                table_div
-                ], id="callback-open-description-div")
-        ], id="callback-return-description-div", style={"width": "100%"}), html.P(id="review-create-output"), {"width": "0%"}]
-    
-
-@app.callback(Output("callback-cancel-review-div", "children"),
-              [Input("cancel-review-button", "n_clicks")])
-def cancel_review(data):
-    if data:
-        return html.Div([
-                html.Div([
-                    html.Div([
-                        table_div
-                        ], id="callback-open-description-div")
-                ], id="callback-return-description-div", style={"width": "100%"}),
-            ], id="callback-create-review-div"),
-    return
-
-
-review2_menu_items = dbc.Row(
-    [
-        dbc.Col(
-            dbc.Button("Go back", id="return2-review-button", n_clicks=0),
-            id="ss", 
-            width={"size": "3"}),
-        dbc.Col(
-            dbc.Button("Do research", id="research2-review-button", n_clicks=0),
-            id="sq", 
-            width={"size": "3", "offset": "2"}),
-    ],
-
-)
-review2_menu = dbc.Navbar(
-    [
-        review2_menu_items,
-        dbc.NavbarToggler(id="navbar-toggler")
-    ],
-    color="dark",
-    dark=True,
-    style={"position": "absolute", "bottom": 0, "left":0, "width": "100%"},
-    id="review-menu")
-
-@app.callback([Output("created-review", "children"),
-               Output("created-review", "style"),
-               Output("view-review-callback-div", "children")],
+@app.callback(Output("callback-created-review", "children"),
               [Input("created-review-button", "n_clicks")],
               [State("review-title-row", "value"),
                State("authors-row", "value"),
                State("keywords-row", "value"),
                State("description-row", "value")])
-def view_created_review(data, title, authors, keywords, description ):
-    if(data):
+def view_created_review(click, title, authors, keywords, description ):
+    if(click):
         try:
             conn = sqlite3.connect("./database/reviews.db")
             
@@ -347,51 +249,20 @@ def view_created_review(data, title, authors, keywords, description ):
             """)
             
             conn.commit()
-        except:
-            pass
-        try:
-            conn = sqlite3.connect("./database/reviews.db")
             
-            cursor = conn.cursor()
             cursor.execute(f"""
             SELECT * FROM reviews WHERE name = "{title}";               
             """)
             
             result = cursor.fetchone()
-            return [html.Div([
-                        html.H3(result[1]),
-                        html.P(result[2]),
-                        html.P(result[3]),
-                        html.P(result[4]),
-                        review2_menu
-                        ], id="description-review"), {"padding-left": "2em","width": "100%"}, 
-                    
-                    html.Div([html.P(id="review-create-output")], 
-                    id="review-create",  style={"width": "0%"})]
+            global REVIEW_ID
+            REVIEW_ID = result[0]
+            return None
+            
         except:
             pass
-    return html.P("hey")
-
-
-@app.callback([Output("callback-created-review-div", "children"),
-               Output("callback-return-created-review-div", "children")],
-              [Input("return2-review-button", "n_clicks")])
-def return_created_review(data):
-    if data:
-        return [html.Div([
-                html.Div([
-                    html.Div([
-                        html.Div([
-                            table_div
-                        ], id="callback-open-description-div")
-                    ], id="callback-return-description-div", style={"width": "100%"}),
-                ], id="callback-create-review-div"),
-            ], id="callback-cancel-review-div"), 
-                
-                html.Div([html.P(id="created-review-output")], 
-                id="created-review",  style={"width": "0%"})]
-    return
-
+        
+    return None
 
 research_menu_items = dbc.Row(
     [
@@ -408,13 +279,14 @@ research_menu_items = dbc.Row(
 )
 research_menu = dbc.Navbar(
     [
-        review2_menu_items,
+        research_menu_items,
         dbc.NavbarToggler(id="navbar-toggler")
     ],
     color="dark",
     dark=True,
     style={"position": "absolute", "bottom": 0, "left":0, "width": "100%"},
     id="review-menu")
+
 @app.callback([Output("research-output", "children"),
                Output("research", "style"),
                Output("review-content", "children")],

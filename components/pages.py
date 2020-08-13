@@ -6,10 +6,13 @@ import dash_core_components as dcc
 import dash_html_components as html
 import dash_cytoscape as cyto
 import dash_table
-
+# Components
 from components.graph_manager import getGraphData
 from components.db_manager import review_df
-
+# Fragments
+from components.fragments.form.create_review_form import review_form
+from components.fragments.menu.create_review_menu import create_menu
+from components.fragments.menu.reviews_menu import reviews_menu
 # Home
 #
 # Home data
@@ -69,36 +72,6 @@ home = html.Div([
 # Review data
 review_table = review_df()
 
-menu_items = dbc.Row(
-    [
-        dbc.Col(
-            dbc.Button("Create Review", id="create-review-button", n_clicks=0),
-            id="ss", 
-            width={"size": "3"}),
-        dbc.Col(
-            dbc.Button("Open Review", id="select-review-button", n_clicks=0), 
-        width={"size": "3"}),
-        dbc.Col(
-            dbc.Button("Download CSV", id="download-csv-button", n_clicks=0), 
-        width={"size": "3"}),
-        dcc.ConfirmDialog(
-            id='confirm-download',
-            message='Your reviews were downloaded as CSV!',
-        )
-    ],
-
-)
-
-menu = dbc.Navbar(
-    [
-        menu_items,
-        dbc.NavbarToggler(id="navbar-toggler")
-    ],
-    color="dark",
-    dark=True,
-    style={"position": "absolute", "bottom": 0, "width": "100%"},
-    id="menu")
-
 table_div = html.Div([
         dash_table.DataTable(
             id="reviews-table",
@@ -112,45 +85,21 @@ table_div = html.Div([
             editable=True,
             row_deletable=True
         ),
-        menu
-        ], id="table-div")
+        reviews_menu
+        ], id="reviews-table-div")
 
 
 # Review layout
-
-review = html.Div([
-    html.Div([
-        html.Div([
-            html.Div([
-                html.Div([
-                    html.Div([
-                        html.Div([
-                            table_div
-                        ], id="callback-open-description-div")
-                    ], id="callback-return-description-div", style={"width": "100%"}),
-                ], id="callback-create-review-div"),
-            ], id="callback-cancel-review-div"),
-        ], id="callback-created-review-div"),
-    ], id="callback-research-div"),
-    html.Div([html.P(id="review-content-output")], id="review-content",  style={"width": "0%"}),
-    html.Div([
-        html.Div([html.P(id="review-create-output")], id="review-create",  style={"width": "0%"}),
-    ], id="view-review-callback-div", style={"width": "100%"}),
-    html.Div([
-        html.Div([
-            html.Div([html.P(id="created-review-output")], id="created-review",  style={"width": "0%"})
-        ],id="callback-return-created-review-div"),
-    ], id="callback-go-do-research-div"),
-    html.Div([
-        html.Div([html.P(id="research-output")], id="research", style={"width": "0%"})
-    ], id="callback-do-research-div"),
-    html.Div([
-        html.Div([html.P(id="do-research-output")], id="do-research", style={"width": "0%"})
-    ])
-], className="row", style={"padding": "1em", "height": "90vh"})
+reviews = html.Div([
+            table_div,
+            html.Div(id="callback-open-review")
+            
+        ], id="reviews-div", className="row", style={"padding": "1em", "height": "90vh"})
 
 
-
-
+create_review = html.Div([review_form,create_menu, html.Div(id="callback-created-review")])
+review = html.Div([html.Div(id="open-review"), html.Div(id="open-created-review")], id="review-output")
 pages = {"home": home,
+         "reviews": reviews,
+         "create-review": create_review,
          "review": review}
